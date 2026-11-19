@@ -1,3 +1,25 @@
+# 🇧🇷 Sobre este fork
+
+Este repositório é um fork do projeto [Wireless Device Battery Monitor](https://github.com/krisgfx9/Wireless-Device-Battery-Monitor), desenvolvido originalmente por [krisgfx9](https://github.com/krisgfx9).
+
+O objetivo deste fork é ampliar a compatibilidade do projeto com novos dispositivos. A principal contribuição desta versão é a implementação de suporte ao **AULA F75 HE**, permitindo identificar e monitorar o nível de bateria do teclado por meio de seu receptor USB de **2,4 GHz**.
+
+O suporte foi implementado e testado em um AULA F75 HE. A compatibilidade com outros modelos ou modos de conexão ainda não foi verificada.
+
+Todos os créditos pelo projeto original, sua estrutura e funcionalidades preexistentes pertencem aos seus respectivos autores. Esta versão mantém a licença original **GPL-3.0 ou posterior**.
+
+---
+
+# 🇺🇸 About this fork
+
+This repository is a fork of the original [Wireless Device Battery Monitor](https://github.com/krisgfx9/Wireless-Device-Battery-Monitor), initially developed by [krisgfx9](https://github.com/krisgfx9).
+
+The goal of this fork is to expand device compatibility by adding support for additional hardware. The main contribution in this version is **AULA F75 HE support**, enabling battery level detection and monitoring through its **2.4 GHz USB receiver**.
+
+This implementation has been developed and tested with an AULA F75 HE. Compatibility with other models or connection modes has not yet been verified.
+
+Full credit for the original project, its architecture, and existing features belongs to their respective authors. This fork retains the original **GPL-3.0-or-later** license.
+
 # BatteryHub
 
 *Formerly **Wireless Battery**. Version 1.1.0 renamed the app; an update keeps your settings, startup choice and battery history.*
