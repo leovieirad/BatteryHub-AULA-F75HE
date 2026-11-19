@@ -47,6 +47,58 @@ int QueryLevel(HidDev& d) {
     }
 }
 
+
+// Alternative GET_DEVICE_INFO protocol used by some 0C45:FEFE dongles.
+bool ReadInfoPacket(HidDev& d, int addr, bool last, BYTE* out) {
+    std::vector<BYTE> req(1 + kLen, 0);
+    req[1] = 0xAA;
+    req[2] = 0x10;
+    req[3] = 24;
+    req[4] = (BYTE)(addr & 0xFF);
+    req[5] = (BYTE)((addr >> 8) & 0xFF);
+    req[7] = last ? 1 : 0;
+
+    d.Flush();
+    if (!d.Write(req)) return false;
+
+    ULONGLONG end = GetTickCount64() + 500;
+    for (;;) {
+        int left = (int)((LONGLONG)end - (LONGLONG)GetTickCount64());
+        if (left <= 0) return false;
+
+        std::vector<BYTE> r;
+        int n = d.Read(r, left);
+        if (n < 0) return false;
+
+        if (n < 32 || r[0] != 0x55 || r[1] != 0x10 || r[2] != 24)
+            continue;
+
+        for (int i = 0; i < 24; i++)
+            out[i] = r[8 + i];
+
+        return true;
+    }
+}
+
+bool QueryDeviceInfo(HidDev& d, int& level, bool& charging) {
+    BYTE info[48] = {};
+
+    if (!ReadInfoPacket(d, 0, false, info))
+        return false;
+
+    if (!ReadInfoPacket(d, 24, true, info + 24))
+        return false;
+
+    if (info[16] > 3 || info[17] > 100)
+        return false;
+
+    level = info[17];
+    charging = info[18] != 0;
+
+    return level > 0;
+}
+
+
 std::wstring KeyboardName(const HidColl& c) {
     std::wstring name = HidProduct(c);
     const std::wstring suffix = L" 2.4G";
@@ -67,9 +119,24 @@ void PollSonix(PollContext& ctx) {
             HidDev d;
             if (!d.Open(*c)) continue;
             // The first request can go unanswered while the 2.4 GHz link wakes up; retry once.
+
             int level = QueryLevel(d);
             if (level < 0) level = QueryLevel(d);
+
+            bool charging = false;
+
+            if (pid == 0xFEFE && level <= 0) {
+                int infoLevel = -1;
+                bool infoCharging = false;
+
+                if (QueryDeviceInfo(d, infoLevel, infoCharging)) {
+                    level = infoLevel;
+                    charging = infoCharging;
+                }
+            }
+
             if (level < 0) continue;
+
             DeviceStatus s;
             s.key = L"sonix:" + Hex4(vid) + L":" + Hex4(pid);
             s.name = KeyboardName(*c);
@@ -77,6 +144,7 @@ void PollSonix(PollContext& ctx) {
             s.via = L"2.4 GHz receiver";
             s.connected = level >= 1 && level <= 100;  // 0: keyboard off, out of range or in another mode
             if (s.connected) s.percent = level;
+            s.charging = charging;
             s.graceSec = 1800;  // keep the last value if a sleeping keyboard stops answering
             ctx.Add(s, vid, pid);
             break;
